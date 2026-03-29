@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import Annotated, List, Optional
 
 import typer
 from rich.console import Console
@@ -54,7 +54,7 @@ def display_troll_report(report: TrollReport):
 @app.command()
 def nitpick(
     drafts: List[Path] = typer.Argument(..., help="List of markdown drafts for the series."),
-    premise: Optional[str] = typer.Option("A technical blog series for developers.", "--premise", "-p", help="Series premise text or path to premise file."),
+    premise: Annotated[Optional[str], typer.Option("--premise", "-e", help="Series premise text or path to premise file.")] = "A technical blog series for developers.",
     provider: str = provider_option(PROVIDERS),
     model: Optional[str] = model_option(),
     dry_run: bool = dry_run_option(),
