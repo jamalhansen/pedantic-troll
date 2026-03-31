@@ -29,20 +29,25 @@ def test_display_troll_report_no_grievances(capsys):
     captured = capsys.readouterr()
     assert "found nothing to complain about" in captured.out
 
-@patch("pedantic_troll.logic.resolve_provider")
+@patch("pedantic_troll.logic.build_model")
+@patch("pedantic_troll.logic.Agent")
+@patch("pedantic_troll.logic.asyncio.run")
 @patch("pedantic_troll.logic.timed_run")
-def test_nitpick_command(mock_timed_run, mock_resolve_provider, tmp_path):
+def test_nitpick_command(mock_timed_run, mock_asyncio_run, mock_agent_class, mock_build_model, tmp_path):
     d1 = tmp_path / "post1.md"
     d1.write_text("content1")
     
-    mock_llm = MagicMock()
-    mock_llm.model = "mock-model"
-    mock_llm.complete.return_value = TrollReport(
+    # Setup mock agent and result
+    mock_agent = MagicMock()
+    mock_agent_class.return_value = mock_agent
+    
+    mock_run_result = MagicMock()
+    mock_run_result.output = TrollReport(
         intro="Troll intro",
         grievances=[],
         verdict="Troll verdict"
     )
-    mock_resolve_provider.return_value = mock_llm
+    mock_asyncio_run.return_value = mock_run_result
     
     mock_timed_run.return_value.__enter__.return_value = MagicMock()
     
