@@ -16,7 +16,7 @@ from local_first_common.cli import (
     no_llm_option,
     resolve_dry_run,
 )
-from local_first_common.tracking import register_tool, timed_run
+from local_first_common.tracking import register_tool, track_llm_run
 
 from .schema import TrollReport
 from .prompts import build_system_prompt, build_user_prompt
@@ -145,11 +145,11 @@ def nitpick(
         console.print(f"Nitpicking {len(posts_data)} drafts using {actual_provider}:{model_name}...")
 
     try:
-        with timed_run("pedantic-troll", f"{actual_provider}:{model_name}", source_location=str(drafts[0].parent)) as run:
+        with track_llm_run("pedantic-troll", f"{actual_provider}:{model_name}", source_location=str(drafts[0].parent)) as run:
             agent = Agent(pai_model, output_type=TrollReport, system_prompt=system)
             result = asyncio.run(agent.run(user))
             report = result.output
-            run.item_count = len(posts_data)
+            run.track(result, item_count=len(posts_data))
     except Exception as e:
         console.print(f"[red]Error during nitpicking: {e}[/red]")
         raise typer.Exit(1)
