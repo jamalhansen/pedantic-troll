@@ -10,7 +10,7 @@ from rich.table import Table
 from pydantic_ai import Agent
 
 from local_first_common.pydantic_ai_utils import build_model, PROVIDER_DEFAULTS, VALID_PROVIDERS
-from local_first_common.personas import list_obsidian_personas
+from local_first_common.personas import list_vault_personas
 from local_first_common.cli import (
     dry_run_option,
     no_llm_option,
@@ -78,7 +78,7 @@ def nitpick(
     
     # Handle --list-personas
     if list_personas:
-        personas = list_obsidian_personas()
+        personas = list_vault_personas("brand")
         if not personas:
             err_console.print("[yellow]No marketing personas found. Check OBSIDIAN_VAULT_PATH/personas/brand[/yellow]")
             raise typer.Exit(1)
@@ -128,7 +128,7 @@ def nitpick(
 
     # 4. Resolve Persona and System Prompt
     if persona:
-        all_personas = list_obsidian_personas()
+        all_personas = list_vault_personas("brand")
         matched = [p for p in all_personas if p.name.lower() == persona.lower()]
         if not matched:
             err_console.print(f"[red]Error:[/red] Persona '{persona}' not found in vault.")

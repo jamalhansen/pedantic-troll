@@ -59,7 +59,7 @@ def test_nitpick_command(mock_track_llm_run, mock_asyncio_run, mock_agent_class,
     assert "Troll verdict" in result.stdout
     mock_run.track.assert_called_once()
 
-@patch("pedantic_troll.logic.list_obsidian_personas")
+@patch("pedantic_troll.logic.list_vault_personas")
 @patch("pedantic_troll.logic.build_model")
 @patch("pedantic_troll.logic.Agent")
 @patch("pedantic_troll.logic.asyncio.run")
