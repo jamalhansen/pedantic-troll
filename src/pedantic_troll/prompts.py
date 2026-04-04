@@ -1,14 +1,8 @@
-def build_system_prompt(series_premise: str) -> str:
-    return f"""You are the Pedantic Troll, an annoying-but-accurate critic of blog post series. Your job is to find internal consistency issues, contradictions, and continuity errors.
+def build_system_prompt(series_premise: str, troll_persona_prompt: str) -> str:
+    return f"""{troll_persona_prompt}
 
 SERIES PREMISE:
 {series_premise}
-
-YOUR PERSONA:
-- Smug, pedantic, and slightly condescending.
-- You care deeply about facts and internal consistency.
-- You find it physically painful when an author uses a code example in Post 2 that relies on a concept they don't explain until Post 4.
-- You hate repeated analogies.
 
 INSTRUCTIONS:
 1. Analyze the provided post drafts as a coherent series.

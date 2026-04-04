@@ -10,7 +10,7 @@ from rich.table import Table
 from pydantic_ai import Agent
 
 from local_first_common.pydantic_ai_utils import build_model, PROVIDER_DEFAULTS, VALID_PROVIDERS
-from local_first_common.personas import list_vault_personas
+from local_first_common.personas import list_personas, get_persona
 from local_first_common.cli import (
     dry_run_option,
     no_llm_option,
@@ -68,21 +68,22 @@ def nitpick(
         Optional[str],
         typer.Option("--model", "-m", help="Override the provider's default model."),
     ] = None,
-    persona: Annotated[Optional[str], typer.Option("--persona", help="Name of an Obsidian persona to use.")] = None,
+    persona_name: Annotated[Optional[str], typer.Option("--persona", help="Name of a persona to use.")] = None,
+    vault: Annotated[Optional[Path], typer.Option("--vault", help="Override the Obsidian vault path.")] = None,
     dry_run: bool = dry_run_option(),
     no_llm: bool = no_llm_option(),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
-    list_personas: bool = typer.Option(False, "--list-personas", help="List available marketing personas."),
+    list_personas_flag: bool = typer.Option(False, "--list-personas", help="List available personas."),
 ):
     """Critique a series of blog post drafts."""
     
     # Handle --list-personas
-    if list_personas:
-        personas = list_vault_personas("brand")
+    if list_personas_flag:
+        personas = list_personas("Util", vault_path=vault) + list_personas("Brand", vault_path=vault)
         if not personas:
-            err_console.print("[yellow]No marketing personas found. Check OBSIDIAN_VAULT_PATH/personas/brand[/yellow]")
+            err_console.print("[yellow]No personas found.[/yellow]")
             raise typer.Exit(1)
-        console.print("\n[bold]Available Marketing Personas:[/bold]\n")
+        console.print("\n[bold]Available Personas (Util & Brand):[/bold]\n")
         for p in personas:
             console.print(f"  [cyan]{p.name}[/cyan] ({p.archetype})")
         console.print()
@@ -127,17 +128,27 @@ def nitpick(
     model_name = actual_model or PROVIDER_DEFAULTS.get(actual_provider, "unknown")
 
     # 4. Resolve Persona and System Prompt
-    if persona:
-        all_personas = list_vault_personas("brand")
-        matched = [p for p in all_personas if p.name.lower() == persona.lower()]
-        if not matched:
-            err_console.print(f"[red]Error:[/red] Persona '{persona}' not found in vault.")
-            raise typer.Exit(1)
-        p = matched[0]
+    if persona_name:
+        # Search in Brand first, then Util
+        try:
+            p = get_persona(persona_name, "Brand", vault_path=vault)
+        except FileNotFoundError:
+            try:
+                p = get_persona(persona_name, "Util", vault_path=vault)
+            except FileNotFoundError:
+                err_console.print(f"[red]Error:[/red] Persona '{persona_name}' not found.")
+                raise typer.Exit(1)
+        
         # Mix the persona prompt with the nitpicking instructions
-        system = f"{p.system_prompt}\n\nYour task is to nitpick the following blog post series based on the premise: {premise_text}. Find contradictions, continuity errors, and repetition. Use your unique voice."
+        system = build_system_prompt(premise_text, p.system_prompt)
     else:
-        system = build_system_prompt(premise_text)
+        # Default to Pedantic Troll from Util
+        try:
+            p = get_persona("Pedantic Troll", "Util", vault_path=vault)
+            system = build_system_prompt(premise_text, p.system_prompt)
+        except FileNotFoundError:
+            err_console.print("[yellow]Pedantic Troll persona not found. Run 'bootstrap' to create it.[/yellow]")
+            raise typer.Exit(1)
 
     user = build_user_prompt(posts_data)
 
@@ -163,6 +174,41 @@ def nitpick(
         source_loc = str(drafts[0].parent) if drafts else "unknown"
         save_troll_report(report, source_loc, premise_text)
         console.print("\n[green]Grievances recorded in Content Quality history.[/green]")
+
+
+@app.command()
+def bootstrap(
+    vault: Annotated[Optional[Path], typer.Option("--vault", help="Override the Obsidian vault path.")] = None,
+):
+    """Create the Pedantic Troll persona in your vault if it's missing."""
+    from local_first_common.obsidian import find_vault_root
+    
+    try:
+        root = vault or find_vault_root()
+    except Exception as e:
+        err_console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+        
+    troll_path = root / "personas" / "Util" / "Pedantic Troll.md"
+    if troll_path.exists():
+        console.print(f"[green]Pedantic Troll already exists at:[/green] {troll_path}")
+        return
+
+    content = """# Pedantic Troll
+**Archetype:** Annoying Critic
+**Category:** [[Persona]]
+
+## Lens
+You are the Pedantic Troll, an annoying-but-accurate critic of blog post series. You care deeply about facts and internal consistency. You find it physically painful when an author uses a code example in Post 2 that relies on a concept they don't explain until Post 4. You hate repeated analogies.
+
+## System Prompt Seed
+> You are smug, pedantic, and slightly condescending. Your job is to find internal consistency issues, contradictions, and continuity errors. Flag contradictions, continuity errors, drift from the premise, and repetitive analogies.
+"""
+    
+    troll_path.parent.mkdir(parents=True, exist_ok=True)
+    troll_path.write_text(content, encoding="utf-8")
+    console.print(f"[bold green]Created Pedantic Troll at:[/bold green] {troll_path}")
+
 
 if __name__ == "__main__":
     app()
