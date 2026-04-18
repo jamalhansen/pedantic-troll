@@ -12,10 +12,13 @@ from pydantic_ai import Agent
 from local_first_common.pydantic_ai_utils import build_model, PROVIDER_DEFAULTS, VALID_PROVIDERS
 from local_first_common.personas import list_personas, get_persona
 from local_first_common.cli import (
+    init_config_option,
+    init_config_option,
     dry_run_option,
     no_llm_option,
     resolve_dry_run,
 )
+from local_first_common.config import get_setting
 from local_first_common.tracking import register_tool, track_llm_run
 
 from .schema import TrollReport
@@ -23,6 +26,8 @@ from .prompts import build_system_prompt, build_user_prompt
 from .persistence import save_troll_report
 
 _TOOL = register_tool("pedantic-troll")
+TOOL_NAME = "pedantic-troll"
+DEFAULTS = {"provider": "ollama", "model": "llama3"}
 console = Console()
 err_console = Console(stderr=True)
 app = typer.Typer(help="Nitpicks blog post series for internal consistency and continuity errors.")
