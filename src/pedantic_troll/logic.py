@@ -13,21 +13,20 @@ from local_first_common.pydantic_ai_utils import build_model, PROVIDER_DEFAULTS,
 from local_first_common.personas import list_personas, get_persona
 from local_first_common.cli import (
     init_config_option,
-    init_config_option,
     dry_run_option,
     no_llm_option,
     resolve_dry_run,
 )
-from local_first_common.config import get_setting
 from local_first_common.tracking import register_tool, track_llm_run
 
 from .schema import TrollReport
 from .prompts import build_system_prompt, build_user_prompt
 from .persistence import save_troll_report
 
-_TOOL = register_tool("pedantic-troll")
 TOOL_NAME = "pedantic-troll"
 DEFAULTS = {"provider": "ollama", "model": "llama3"}
+_TOOL = register_tool(TOOL_NAME)
+
 console = Console()
 err_console = Console(stderr=True)
 app = typer.Typer(help="Nitpicks blog post series for internal consistency and continuity errors.")
@@ -56,35 +55,29 @@ def display_troll_report(report: TrollReport):
         console.print(table)
 
     console.print(f"\n[bold]VERDICT:[/bold] {report.verdict}")
-
 @app.command()
 def nitpick(
     drafts: Annotated[Optional[List[Path]], typer.Argument(help="List of markdown drafts for the series.")] = None,
     premise: Annotated[Optional[str], typer.Option("--premise", "-e", help="Series premise text or path to premise file.")] = "A technical blog series for developers.",
-    provider: Annotated[
-        str,
-        typer.Option(
-            "--provider",
-            "-p",
-            help=f"LLM provider. Choices: {', '.join(VALID_PROVIDERS)}",
-        ),
-    ] = os.environ.get("MODEL_PROVIDER", "ollama"),
-    model: Annotated[
-        Optional[str],
-        typer.Option("--model", "-m", help="Override the provider's default model."),
-    ] = None,
+    provider_name: Annotated[str, typer.Option(
+        "--provider",
+        "-p",
+        help=f"LLM provider. Choices: {', '.join(VALID_PROVIDERS)}",
+    )] = os.environ.get("MODEL_PROVIDER", "ollama"),
+    model: Annotated[Optional[str], typer.Option("--model", "-m", help="Override the provider's default model.")] = None,
     persona_name: Annotated[Optional[str], typer.Option("--persona", help="Name of a persona to use.")] = None,
     vault: Annotated[Optional[Path], typer.Option("--vault", help="Override the Obsidian vault path.")] = None,
-    dry_run: bool = dry_run_option(),
-    no_llm: bool = no_llm_option(),
-    verbose: bool = typer.Option(False, "--verbose", "-v"),
-    list_personas_flag: bool = typer.Option(False, "--list-personas", help="List available personas."),
+    dry_run: Annotated[bool, dry_run_option()] = False,
+    no_llm: Annotated[bool, no_llm_option()] = False,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False,
+    list_personas_flag: Annotated[bool, typer.Option("--list-personas", help="List available personas.")] = False,
+    init_config: Annotated[bool, init_config_option(TOOL_NAME, DEFAULTS)] = False,
 ):
     """Critique a series of blog post drafts."""
-    
+
     # Handle --list-personas
     if list_personas_flag:
-        personas = list_personas("Util", vault_path=vault) + list_personas("Brand", vault_path=vault)
+        personas = list_personas()
         if not personas:
             err_console.print("[yellow]No personas found.[/yellow]")
             raise typer.Exit(1)
@@ -121,7 +114,7 @@ def nitpick(
         raise typer.Exit(1)
 
     # 3. Resolve Model
-    actual_provider = "mock" if no_llm else provider
+    actual_provider = "mock" if no_llm else provider_name
     actual_model = "test-model" if no_llm else model
     
     try:
@@ -183,7 +176,7 @@ def nitpick(
 
 @app.command()
 def bootstrap(
-    vault: Annotated[Optional[Path], typer.Option("--vault", help="Override the Obsidian vault path.")] = None,
+    vault: Optional[Path] = typer.Option(None, "--vault", help="Override the Obsidian vault path."),
 ):
     """Create the Pedantic Troll persona in your vault if it's missing."""
     from local_first_common.obsidian import find_vault_root
