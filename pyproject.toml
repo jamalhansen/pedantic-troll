@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pedantic-troll = "pedantic_troll.logic:app"
+pedantic-troll = "pedantic_troll.cli:app"
 
 [build-system]
 requires = ["hatchling"]

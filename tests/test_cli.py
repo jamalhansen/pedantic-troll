@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 from typer.testing import CliRunner
-from pedantic_troll.logic import app, display_troll_report
+from pedantic_troll.cli import app, display_troll_report
 from pedantic_troll.schema import TrollReport, Grievance
 from local_first_common.personas import BasePersona
 
@@ -30,11 +30,11 @@ def test_display_troll_report_no_grievances(capsys):
     captured = capsys.readouterr()
     assert "found nothing to complain about" in captured.out
 
-@patch("pedantic_troll.logic.get_persona")
-@patch("pedantic_troll.logic.build_model")
-@patch("pedantic_troll.logic.Agent")
-@patch("pedantic_troll.logic.asyncio.run")
-@patch("pedantic_troll.logic.track_llm_run")
+@patch("pedantic_troll.cli.get_persona")
+@patch("pedantic_troll.cli.build_model")
+@patch("pedantic_troll.cli.Agent")
+@patch("pedantic_troll.cli.asyncio.run")
+@patch("pedantic_troll.cli.track_llm_run")
 def test_nitpick_command(mock_track_llm_run, mock_asyncio_run, mock_agent_class, mock_build_model, mock_get_persona, tmp_path):
     d1 = tmp_path / "post1.md"
     d1.write_text("content1")
@@ -63,11 +63,11 @@ def test_nitpick_command(mock_track_llm_run, mock_asyncio_run, mock_agent_class,
     assert "Troll verdict" in result.stdout
     mock_run.track.assert_called_once()
 
-@patch("pedantic_troll.logic.get_persona")
-@patch("pedantic_troll.logic.build_model")
-@patch("pedantic_troll.logic.Agent")
-@patch("pedantic_troll.logic.asyncio.run")
-@patch("pedantic_troll.logic.track_llm_run")
+@patch("pedantic_troll.cli.get_persona")
+@patch("pedantic_troll.cli.build_model")
+@patch("pedantic_troll.cli.Agent")
+@patch("pedantic_troll.cli.asyncio.run")
+@patch("pedantic_troll.cli.track_llm_run")
 def test_nitpick_with_persona(mock_track, mock_async, mock_agent, mock_build, mock_get_persona, tmp_path):
     mock_get_persona.return_value = BasePersona(name="Grumpy", archetype="Troll", system_prompt="Be mean.")
     
