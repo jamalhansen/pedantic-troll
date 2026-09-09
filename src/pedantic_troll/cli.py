@@ -116,6 +116,10 @@ def nitpick(
         Optional[str],
         typer.Option("--model", "-m", help="Override the provider's default model."),
     ] = None,
+    tier: Annotated[
+        str,
+        typer.Option("--tier", "-t", help="Model tier ('reasoning' or 'fast'). Defaults to 'reasoning'."),
+    ] = "reasoning",
     persona_name: Annotated[
         Optional[str], typer.Option("--persona", help="Name of a persona to use.")
     ] = None,
@@ -175,7 +179,7 @@ def nitpick(
     actual_model = "test-model" if no_llm else model
 
     try:
-        pai_model = build_model(actual_provider, actual_model)
+        pai_model = build_model(actual_provider, actual_model, tier=tier)
     except ModelBuildError as e:
         console.print(f"[red]Error building model:[/red] {e}")
         raise typer.Exit(1)
@@ -183,7 +187,11 @@ def nitpick(
         console.print(f"[red]Error building model:[/red] {e}")
         raise typer.Exit(1)
 
-    model_name = actual_model or PROVIDER_DEFAULTS.get(actual_provider, "unknown")
+    model_name = (
+        getattr(pai_model, "model_name", None)
+        or actual_model
+        or PROVIDER_DEFAULTS.get(actual_provider, "unknown")
+    )
 
     # 4. Resolve Persona and System Prompt
     if persona_name:
