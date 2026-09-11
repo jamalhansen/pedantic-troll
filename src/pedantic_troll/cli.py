@@ -2,32 +2,31 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-from typing import Annotated, List, Optional
+from typing import Annotated
 
 import typer
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
-from pydantic_ai import Agent
-
-from local_first_common.pydantic_ai_utils import (
-    build_model,
-    PROVIDER_DEFAULTS,
-    VALID_PROVIDERS,
-)
-from local_first_common.personas import list_personas, get_persona
 from local_first_common.cli import (
-    init_config_option,
     dry_run_option,
+    init_config_option,
     no_llm_option,
     resolve_dry_run,
 )
 from local_first_common.logging import setup_logging
+from local_first_common.personas import get_persona, list_personas
+from local_first_common.pydantic_ai_utils import (
+    PROVIDER_DEFAULTS,
+    VALID_PROVIDERS,
+    build_model,
+)
 from local_first_common.tracking import register_tool, track_llm_run
+from pydantic_ai import Agent
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
-from .schema import TrollReport
-from .prompts import build_system_prompt, build_user_prompt
 from .persistence import save_troll_report
+from .prompts import build_system_prompt, build_user_prompt
+from .schema import TrollReport
 
 TOOL_NAME = "pedantic-troll"
 
@@ -95,11 +94,11 @@ def display_troll_report(report: TrollReport):
 @app.command()
 def nitpick(
     drafts: Annotated[
-        Optional[List[Path]],
+        list[Path] | None,
         typer.Argument(help="List of markdown drafts for the series."),
     ] = None,
     premise: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--premise", "-e", help="Series premise text or path to premise file."
         ),
@@ -113,7 +112,7 @@ def nitpick(
         ),
     ] = os.environ.get("MODEL_PROVIDER", "ollama"),
     model: Annotated[
-        Optional[str],
+        str | None,
         typer.Option("--model", "-m", help="Override the provider's default model."),
     ] = None,
     tier: Annotated[
@@ -121,10 +120,10 @@ def nitpick(
         typer.Option("--tier", "-t", help="Model tier ('reasoning' or 'fast'). Defaults to 'reasoning'."),
     ] = "reasoning",
     persona_name: Annotated[
-        Optional[str], typer.Option("--persona", help="Name of a persona to use.")
+        str | None, typer.Option("--persona", help="Name of a persona to use.")
     ] = None,
     vault: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option("--vault", help="Override the Obsidian vault path."),
     ] = None,
     dry_run: Annotated[bool, dry_run_option()] = False,
@@ -183,7 +182,7 @@ def nitpick(
     except ModelBuildError as e:
         console.print(f"[red]Error building model:[/red] {e}")
         raise typer.Exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         console.print(f"[red]Error building model:[/red] {e}")
         raise typer.Exit(1)
 
@@ -240,7 +239,7 @@ def nitpick(
     except NitpickRunError as e:
         console.print(f"[red]Error during nitpicking: {e}[/red]")
         raise typer.Exit(1)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         console.print(f"[red]Error during nitpicking: {e}[/red]")
         raise typer.Exit(1)
 
@@ -261,16 +260,16 @@ def nitpick(
 
 @app.command()
 def bootstrap(
-    vault: Optional[Path] = typer.Option(
-        None, "--vault", help="Override the Obsidian vault path."
-    ),
+    vault: Annotated[
+        Path | None, typer.Option("--vault", help="Override the Obsidian vault path.")
+    ] = None,
 ):
     """Create the Pedantic Troll persona in your vault if it's missing."""
     from local_first_common.obsidian import find_vault_root
 
     try:
         root = vault or find_vault_root()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         err_console.print(f"[red]Error:[/red] {e}")
         raise typer.Exit(1)
 

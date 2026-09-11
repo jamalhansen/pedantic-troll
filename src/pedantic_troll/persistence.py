@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
-from sqlmodel import Session, SQLModel, create_engine
+
 from local_first_common.db import CONTENT_QUALITY_DB_PATH
-from .schema import TrollReport, TrollRecord
+from sqlmodel import Session, SQLModel, create_engine
+
+from .schema import TrollRecord, TrollReport
 
 
 def get_engine(db_path: Path = CONTENT_QUALITY_DB_PATH):

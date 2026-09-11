@@ -1,8 +1,10 @@
 from unittest.mock import MagicMock, patch
-from typer.testing import CliRunner
-from pedantic_troll.cli import app, display_troll_report
-from pedantic_troll.schema import TrollReport, Grievance
+
 from local_first_common.personas import BasePersona
+from typer.testing import CliRunner
+
+from pedantic_troll.cli import app, display_troll_report
+from pedantic_troll.schema import Grievance, TrollReport
 
 runner = CliRunner()
 

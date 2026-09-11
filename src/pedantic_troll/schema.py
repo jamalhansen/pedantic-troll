@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List, Optional
+
 from pydantic import BaseModel, Field
-from sqlmodel import SQLModel, Field as SQLField
+from sqlmodel import Field as SQLField
+from sqlmodel import SQLModel
 
 
 class Grievance(BaseModel):
@@ -13,14 +14,14 @@ class Grievance(BaseModel):
 
 class TrollReport(BaseModel):
     intro: str = Field(..., description="A smug, pedantic introduction from the Troll")
-    grievances: List[Grievance]
+    grievances: list[Grievance]
     verdict: str = Field(..., description="Final condescending verdict")
 
 
 class TrollRecord(SQLModel, table=True):
     """Database record for Troll grievances."""
     
-    id: Optional[int] = SQLField(default=None, primary_key=True)
+    id: int | None = SQLField(default=None, primary_key=True)
     timestamp: datetime = SQLField(default_factory=datetime.now)
     series_premise: str
     source_location: str # Parent directory of drafts

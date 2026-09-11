@@ -1,5 +1,5 @@
+from pedantic_troll.logic import ModelBuildError, NitpickRunError, PedanticTrollError
 from pedantic_troll.prompts import build_system_prompt
-from pedantic_troll.logic import PedanticTrollError, ModelBuildError, NitpickRunError
 
 
 def test_build_system_prompt():
