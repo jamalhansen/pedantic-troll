@@ -1,4 +1,4 @@
-from pedantic_troll.logic import ModelBuildError, NitpickRunError, PedanticTrollError
+from pedantic_troll.cli import ModelBuildError, NitpickRunError, PedanticTrollError
 from pedantic_troll.prompts import build_system_prompt
 
 
