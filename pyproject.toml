@@ -7,7 +7,7 @@ dependencies = [
     "typer>=0.15.0",
     "rich>=14.3.3",
     "pydantic>=2.12.5",
-    "pydantic-ai",
+    "pydantic-ai[groq]",
     "sqlmodel",
     "local-first-common",
     "toml>=0.10.2",
