@@ -181,10 +181,10 @@ def nitpick(
         pai_model = build_model(actual_provider, actual_model, tier=tier)
     except ModelBuildError as e:
         console.print(f"[red]Error building model:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         console.print(f"[red]Error building model:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     model_name = (
         getattr(pai_model, "model_name", None)
@@ -204,7 +204,7 @@ def nitpick(
                 err_console.print(
                     f"[red]Error:[/red] Persona '{persona_name}' not found."
                 )
-                raise typer.Exit(1)
+                raise typer.Exit(1) from None
 
         # Mix the persona prompt with the nitpicking instructions
         system = build_system_prompt(premise_text, p.system_prompt)
@@ -217,7 +217,7 @@ def nitpick(
             err_console.print(
                 "[yellow]Pedantic Troll persona not found. Run 'bootstrap' to create it.[/yellow]"
             )
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
     user = build_user_prompt(posts_data)
 
@@ -238,10 +238,10 @@ def nitpick(
             run.track(result, item_count=len(posts_data))
     except NitpickRunError as e:
         console.print(f"[red]Error during nitpicking: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
     except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         console.print(f"[red]Error during nitpicking: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     display_troll_report(report)
 
@@ -271,7 +271,7 @@ def bootstrap(
         root = vault or find_vault_root()
     except Exception as e:  # noqa: BLE001 - top-level CLI boundary: report cleanly and exit, don't show a raw traceback
         err_console.print(f"[red]Error:[/red] {e}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     troll_path = root / "personas" / "Util" / "Pedantic Troll.md"
     if troll_path.exists():
