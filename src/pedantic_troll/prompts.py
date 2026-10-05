@@ -15,6 +15,7 @@ OUTPUT FORMAT:
 Return a JSON object matching the TrollReport schema.
 """
 
+
 def build_user_prompt(posts: list[dict]) -> str:
     prompt = "Here are the drafts for the series. Do your worst.\n\n"
     for p in posts:

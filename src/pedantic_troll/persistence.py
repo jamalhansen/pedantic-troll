@@ -15,21 +15,16 @@ def get_engine(db_path: Path = CONTENT_QUALITY_DB_PATH):
     return engine
 
 
-def save_troll_report(
-    report: TrollReport, 
-    source_location: str, 
-    premise: str,
-    db_path: Path = CONTENT_QUALITY_DB_PATH
-):
+def save_troll_report(report: TrollReport, source_location: str, premise: str, db_path: Path = CONTENT_QUALITY_DB_PATH):
     engine = get_engine(db_path)
-    
+
     error_count = sum(1 for g in report.grievances if g.severity == "error")
     contradiction_count = sum(1 for g in report.grievances if g.severity == "contradiction")
     nit_count = sum(1 for g in report.grievances if g.severity == "nit")
-    
+
     # Simple JSON serialization for grievances
     grievances_json = json.dumps([g.model_dump() for g in report.grievances])
-    
+
     with Session(engine) as session:
         record = TrollRecord(
             series_premise=premise,
@@ -40,7 +35,7 @@ def save_troll_report(
             nit_count=nit_count,
             intro=report.intro,
             verdict=report.verdict,
-            all_grievances_json=grievances_json
+            all_grievances_json=grievances_json,
         )
         session.add(record)
         session.commit()

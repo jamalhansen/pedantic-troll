@@ -20,17 +20,17 @@ class TrollReport(BaseModel):
 
 class TrollRecord(SQLModel, table=True):
     """Database record for Troll grievances."""
-    
+
     id: int | None = SQLField(default=None, primary_key=True)
     timestamp: datetime = SQLField(default_factory=datetime.now)
     series_premise: str
-    source_location: str # Parent directory of drafts
-    
+    source_location: str  # Parent directory of drafts
+
     grievance_count: int
     error_count: int
     contradiction_count: int
     nit_count: int
-    
+
     intro: str
     verdict: str
-    all_grievances_json: str # Store as serialized JSON for simplicity
+    all_grievances_json: str  # Store as serialized JSON for simplicity

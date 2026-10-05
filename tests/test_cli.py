@@ -8,13 +8,12 @@ from pedantic_troll.schema import Grievance, TrollReport
 
 runner = CliRunner()
 
+
 def test_display_troll_report_success(capsys):
     report = TrollReport(
         intro="Listen here, amateur.",
-        grievances=[
-            Grievance(post_reference="p1", quote_snippet="abc", complaint="bad", severity="nit")
-        ],
-        verdict="Rewrite everything."
+        grievances=[Grievance(post_reference="p1", quote_snippet="abc", complaint="bad", severity="nit")],
+        verdict="Rewrite everything.",
     )
     display_troll_report(report)
     captured = capsys.readouterr()
@@ -22,48 +21,45 @@ def test_display_troll_report_success(capsys):
     assert "NIT" in captured.out
     assert "Rewrite everything." in captured.out
 
+
 def test_display_troll_report_no_grievances(capsys):
-    report = TrollReport(
-        intro="Fine, I guess.",
-        grievances=[],
-        verdict="Carry on."
-    )
+    report = TrollReport(intro="Fine, I guess.", grievances=[], verdict="Carry on.")
     display_troll_report(report)
     captured = capsys.readouterr()
     assert "found nothing to complain about" in captured.out
+
 
 @patch("pedantic_troll.cli.get_persona")
 @patch("pedantic_troll.cli.build_model")
 @patch("pedantic_troll.cli.Agent")
 @patch("pedantic_troll.cli.asyncio.run")
 @patch("pedantic_troll.cli.track_llm_run")
-def test_nitpick_command(mock_track_llm_run, mock_asyncio_run, mock_agent_class, mock_build_model, mock_get_persona, tmp_path):
+def test_nitpick_command(
+    mock_track_llm_run, mock_asyncio_run, mock_agent_class, mock_build_model, mock_get_persona, tmp_path
+):
     d1 = tmp_path / "post1.md"
     d1.write_text("content1")
-    
+
     mock_get_persona.return_value = BasePersona(name="Pedantic Troll", archetype="Troll", system_prompt="Be pedantic.")
 
     # Setup mock agent and result
     mock_agent = MagicMock()
     mock_agent_class.return_value = mock_agent
-    
+
     mock_run_result = MagicMock()
-    mock_run_result.output = TrollReport(
-        intro="Troll intro",
-        grievances=[],
-        verdict="Troll verdict"
-    )
+    mock_run_result.output = TrollReport(intro="Troll intro", grievances=[], verdict="Troll verdict")
     mock_asyncio_run.return_value = mock_run_result
-    
+
     mock_run = MagicMock()
     mock_track_llm_run.return_value.__enter__.return_value = mock_run
-    
+
     result = runner.invoke(app, ["nitpick", str(d1), "--no-llm"])
-    
+
     assert result.exit_code == 0
     assert "Troll intro" in result.stdout
     assert "Troll verdict" in result.stdout
     mock_run.track.assert_called_once()
+
 
 @patch("pedantic_troll.cli.get_persona")
 @patch("pedantic_troll.cli.build_model")
@@ -72,15 +68,15 @@ def test_nitpick_command(mock_track_llm_run, mock_asyncio_run, mock_agent_class,
 @patch("pedantic_troll.cli.track_llm_run")
 def test_nitpick_with_persona(mock_track, mock_async, mock_agent, mock_build, mock_get_persona, tmp_path):
     mock_get_persona.return_value = BasePersona(name="Grumpy", archetype="Troll", system_prompt="Be mean.")
-    
+
     d1 = tmp_path / "post1.md"
     d1.write_text("content1")
-    
+
     mock_run_result = MagicMock()
     mock_run_result.output = TrollReport(intro="Persona intro", grievances=[], verdict="Persona verdict")
     mock_async.return_value = mock_run_result
-    
+
     result = runner.invoke(app, ["nitpick", str(d1), "--persona", "Grumpy", "--no-llm"])
-    
+
     assert result.exit_code == 0
     assert "Persona intro" in result.stdout

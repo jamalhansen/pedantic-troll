@@ -48,9 +48,7 @@ _TOOL = register_tool(TOOL_NAME)
 
 console = Console()
 err_console = Console(stderr=True)
-app = typer.Typer(
-    help="Nitpicks blog post series for internal consistency and continuity errors."
-)
+app = typer.Typer(help="Nitpicks blog post series for internal consistency and continuity errors.")
 
 
 def display_troll_report(report: TrollReport):
@@ -64,9 +62,7 @@ def display_troll_report(report: TrollReport):
     )
 
     if not report.grievances:
-        console.print(
-            "\n[bold green]Miraculously, the Troll found nothing to complain about.[/bold green]"
-        )
+        console.print("\n[bold green]Miraculously, the Troll found nothing to complain about.[/bold green]")
     else:
         table = Table(show_header=True, header_style="bold magenta")
         table.add_column("Post", style="dim")
@@ -75,11 +71,7 @@ def display_troll_report(report: TrollReport):
         table.add_column("Complaint")
 
         for g in report.grievances:
-            color = (
-                "red"
-                if g.severity == "error" or g.severity == "contradiction"
-                else "yellow"
-            )
+            color = "red" if g.severity == "error" or g.severity == "contradiction" else "yellow"
             table.add_row(
                 g.post_reference,
                 f"[{color}]{g.severity.upper()}[/{color}]",
@@ -99,9 +91,7 @@ def nitpick(
     ] = None,
     premise: Annotated[
         str | None,
-        typer.Option(
-            "--premise", "-e", help="Series premise text or path to premise file."
-        ),
+        typer.Option("--premise", "-e", help="Series premise text or path to premise file."),
     ] = "A technical blog series for developers.",
     provider_name: Annotated[
         str,
@@ -119,9 +109,7 @@ def nitpick(
         str,
         typer.Option("--tier", "-t", help="Model tier ('reasoning' or 'fast'). Defaults to 'reasoning'."),
     ] = "reasoning",
-    persona_name: Annotated[
-        str | None, typer.Option("--persona", help="Name of a persona to use.")
-    ] = None,
+    persona_name: Annotated[str | None, typer.Option("--persona", help="Name of a persona to use.")] = None,
     vault: Annotated[
         Path | None,
         typer.Option("--vault", help="Override the Obsidian vault path."),
@@ -129,9 +117,7 @@ def nitpick(
     dry_run: Annotated[bool, dry_run_option()] = False,
     no_llm: Annotated[bool, no_llm_option()] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v")] = False,
-    list_personas_flag: Annotated[
-        bool, typer.Option("--list-personas", help="List available personas.")
-    ] = False,
+    list_personas_flag: Annotated[bool, typer.Option("--list-personas", help="List available personas.")] = False,
     init_config: Annotated[bool, init_config_option(TOOL_NAME, DEFAULTS)] = False,
 ):
     """Critique a series of blog post drafts."""
@@ -187,9 +173,7 @@ def nitpick(
         raise typer.Exit(1) from None
 
     model_name = (
-        getattr(pai_model, "model_name", None)
-        or actual_model
-        or PROVIDER_DEFAULTS.get(actual_provider, "unknown")
+        getattr(pai_model, "model_name", None) or actual_model or PROVIDER_DEFAULTS.get(actual_provider, "unknown")
     )
 
     # 4. Resolve Persona and System Prompt
@@ -201,9 +185,7 @@ def nitpick(
             try:
                 p = get_persona(persona_name, "Util", vault_path=vault)
             except FileNotFoundError:
-                err_console.print(
-                    f"[red]Error:[/red] Persona '{persona_name}' not found."
-                )
+                err_console.print(f"[red]Error:[/red] Persona '{persona_name}' not found.")
                 raise typer.Exit(1) from None
 
         # Mix the persona prompt with the nitpicking instructions
@@ -214,17 +196,13 @@ def nitpick(
             p = get_persona("Pedantic Troll", "Util", vault_path=vault)
             system = build_system_prompt(premise_text, p.system_prompt)
         except FileNotFoundError:
-            err_console.print(
-                "[yellow]Pedantic Troll persona not found. Run 'bootstrap' to create it.[/yellow]"
-            )
+            err_console.print("[yellow]Pedantic Troll persona not found. Run 'bootstrap' to create it.[/yellow]")
             raise typer.Exit(1) from None
 
     user = build_user_prompt(posts_data)
 
     if verbose:
-        console.print(
-            f"Nitpicking {len(posts_data)} drafts using {actual_provider}:{model_name}..."
-        )
+        console.print(f"Nitpicking {len(posts_data)} drafts using {actual_provider}:{model_name}...")
 
     try:
         with track_llm_run(
@@ -246,23 +224,17 @@ def nitpick(
     display_troll_report(report)
 
     if dry_run:
-        console.print(
-            "\n[yellow][dry-run] Nitpicking complete. No feelings were actually hurt.[/yellow]"
-        )
+        console.print("\n[yellow][dry-run] Nitpicking complete. No feelings were actually hurt.[/yellow]")
     else:
         # Save to database
         source_loc = str(drafts[0].parent) if drafts else "unknown"
         save_troll_report(report, source_loc, premise_text)
-        console.print(
-            "\n[green]Grievances recorded in Content Quality history.[/green]"
-        )
+        console.print("\n[green]Grievances recorded in Content Quality history.[/green]")
 
 
 @app.command()
 def bootstrap(
-    vault: Annotated[
-        Path | None, typer.Option("--vault", help="Override the Obsidian vault path.")
-    ] = None,
+    vault: Annotated[Path | None, typer.Option("--vault", help="Override the Obsidian vault path.")] = None,
 ):
     """Create the Pedantic Troll persona in your vault if it's missing."""
     from local_first_common.obsidian import find_vault_root
