@@ -90,7 +90,7 @@ def nitpick(
         typer.Argument(help="List of markdown drafts for the series."),
     ] = None,
     premise: Annotated[
-        str | None,
+        str,
         typer.Option("--premise", "-e", help="Series premise text or path to premise file."),
     ] = "A technical blog series for developers.",
     provider_name: Annotated[
